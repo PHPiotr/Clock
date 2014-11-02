@@ -14,7 +14,7 @@ public class MyAnalogClock extends View {
 
 	int canvasWidth, canvasHeight, clockWidth, clockHeight, clockLeft,
 			clockTop, minuteHeight, minuteWidth, minuteLeft, minuteTop,
-			hourHeight, hourWidth, hourLeft, hourHTop;
+			hourHeight, hourWidth, hourLeft, hourTop;
 
 	public MyAnalogClock(Context context) {
 		super(context);
@@ -49,13 +49,13 @@ public class MyAnalogClock extends View {
 		clockTop = (canvasHeight - clockWidth) / 2;
 
 		hourLeft = (canvasWidth - hourWidth) / 2;
-		hourHTop = (canvasHeight - hourHeight) / 2;
+		hourTop = (canvasHeight - hourHeight) / 2;
 
 		minuteLeft = (canvasWidth - minuteWidth) / 2;
 		minuteTop = (canvasHeight - minuteHeight) / 2;
 
 		canvas.drawBitmap(clock, clockLeft, clockTop, null);
-		canvas.drawBitmap(hour, hourLeft, hourHTop, null);
+		canvas.drawBitmap(hour, hourLeft, hourTop, null);
 		canvas.drawBitmap(minute, minuteLeft, minuteTop, null);
 	}
 }
