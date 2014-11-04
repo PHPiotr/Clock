@@ -63,7 +63,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 		SurfaceHolder holder;
 
-		Matrix matrix;
+		Matrix minuteMatrix, hourMatrix;
 
 		Thread thread = null;
 
@@ -74,14 +74,15 @@ public class MainActivity extends Activity implements OnTouchListener {
 		int canvasWidth, canvasHeight, clockWidth, clockHeight, clockLeft,
 				clockTop, minuteHeight, minuteWidth, minuteLeft, minuteTop,
 				hourHeight, hourWidth, hourLeft, hourTop, minuteCenterX,
-				minuteCenterY, degrees;
+				minuteCenterY, minuteDegrees, hourDegrees;
 
 		public MyAnalogClock(Context context) {
 
 			super(context);
 			holder = getHolder();
 
-			matrix = new Matrix();
+			minuteMatrix = new Matrix();
+			hourMatrix = new Matrix();
 		}
 
 		public void pause() {
@@ -157,29 +158,39 @@ public class MainActivity extends Activity implements OnTouchListener {
 				minuteCenterY = minuteTop + minuteHeight / 2;
 
 				canvas.drawBitmap(clock, clockLeft, clockTop, null);
-				canvas.drawBitmap(hour, hourLeft, hourTop, null);
 
-				matrix.reset();
-				matrix.postTranslate(minuteLeft, minuteTop);
+				minuteMatrix.reset();
+				minuteMatrix.postTranslate(minuteLeft, minuteTop);
+				
+				hourMatrix.reset();
+				hourMatrix.postTranslate(minuteLeft, minuteTop);
 
 				if (x == 0 && y == 0) {
 
-					degrees = 0;
+					minuteDegrees = hourDegrees = 0;
 				}
 
 				if (x != 0 && y != 0) {
 
-					degrees = ((int) Math.toDegrees(Math.atan2(minuteCenterY
+					minuteDegrees = ((int) Math.toDegrees(Math.atan2(minuteCenterY
 							- y, minuteCenterX - x))) - 90;
+					
+					if (minuteDegrees == -269) {
+						minuteDegrees = 360 + minuteDegrees;
+					}
+					
+					hourDegrees = minuteDegrees / 12;
 				}
 
-				matrix.postRotate(degrees, minuteCenterX, minuteCenterY);
+				minuteMatrix.postRotate(minuteDegrees, minuteCenterX, minuteCenterY);
+				hourMatrix.postRotate(hourDegrees, minuteCenterX, minuteCenterY);
 
-				canvas.drawBitmap(minute, matrix, null);
+				canvas.drawBitmap(hour, hourMatrix, null);
+				canvas.drawBitmap(minute, minuteMatrix, null);
 
 				paint.setColor(Color.BLACK);
 				paint.setTextSize(20);
-				canvas.drawText("" + degrees, 10, 25, paint);
+				canvas.drawText("" + minuteDegrees, 10, 25, paint);
 
 				holder.unlockCanvasAndPost(canvas);
 			}
