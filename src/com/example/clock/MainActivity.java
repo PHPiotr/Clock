@@ -9,6 +9,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -22,17 +23,61 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 	MyAnalogClock clock;
 
-	float eventX, eventY;
+	float eventX, eventY = 0;
+
+	int canvasWidth, canvasHeight, clockWidth, clockHeight, clockLeft,
+			clockTop, minuteHeight, minuteWidth, minuteLeft, minuteTop,
+			hourHeight, hourWidth, hourLeft, hourTop, minuteCenterX,
+			minuteCenterY, minuteDegrees, hourDegrees, minsHelper,
+			hourHelper = 0;
+
+	int q1, q2, q3, q4 = 0;
+
+	protected void onSaveInstanceState(Bundle outState) {
+
+		outState.putInt("MINUTE_DEGREES", minuteDegrees);
+		outState.putInt("HOUR_DEGREES", hourDegrees);
+
+		outState.putInt("MINUTE_HELPER", minsHelper);
+		outState.putInt("HOUR_HELPER", hourHelper);
+
+		outState.putInt("MINUTE_CENTER_X", minuteCenterX);
+		outState.putInt("MINUTE_CENTER_Y", minuteCenterY);
+
+		outState.putInt("Q1", q1);
+		outState.putInt("Q2", q2);
+		outState.putInt("Q3", q3);
+		outState.putInt("Q4", q4);
+
+		super.onSaveInstanceState(outState);
+	}
 
 	protected void onCreate(Bundle savedInstanceState) {
 
 		super.onCreate(savedInstanceState);
 
+		if (savedInstanceState != null) {
+			
+			eventX = eventY = 0;
+
+			minuteDegrees = savedInstanceState.getInt("MINUTE_DEGREES");
+			hourDegrees = savedInstanceState.getInt("HOUR_DEGREES");
+
+			minsHelper = savedInstanceState.getInt("MINUTE_HELPER");
+			hourHelper = savedInstanceState.getInt("HOUR_HELPER");
+
+			minuteCenterX = savedInstanceState.getInt("MINUTE_CENTER_X");
+			minuteCenterY = savedInstanceState.getInt("MINUTE_CENTER_Y");
+
+			q1 = savedInstanceState.getInt("Q1");
+			q2 = savedInstanceState.getInt("Q2");
+			q3 = savedInstanceState.getInt("Q3");
+			q4 = savedInstanceState.getInt("Q4");
+		}
+
 		clock = new MyAnalogClock(this);
 		clock.resume();
 		clock.setOnTouchListener(this);
-
-		eventX = eventY = 0;
 
 		setContentView(clock);
 	}
@@ -72,16 +117,6 @@ public class MainActivity extends Activity implements OnTouchListener {
 		boolean isRunning = false;
 
 		Bitmap clock, hour, minute;
-
-		int canvasWidth, canvasHeight, clockWidth, clockHeight, clockLeft,
-				clockTop, minuteHeight, minuteWidth, minuteLeft, minuteTop,
-				hourHeight, hourWidth, hourLeft, hourTop, minuteCenterX,
-				minuteCenterY, minuteDegrees, hourDegrees;
-
-		int minsHelper = 0;
-		int hourHelper = 0;
-
-		int q1, q2, q3, q4;
 
 		String hourFormat, minsFormat;
 
@@ -174,11 +209,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 				hourMatrix.reset();
 				hourMatrix.postTranslate(minuteLeft, minuteTop);
 
-				if (eventX == 0 && eventY == 0) {
-
-					minuteDegrees = hourDegrees = 0;
-
-				} else {
+				if (eventX != 0 && eventY != 0) {
 
 					minuteDegrees = ((int) Math.toDegrees(Math.atan2(
 							minuteCenterY - eventY, minuteCenterX - eventX))) - 90;
@@ -268,11 +299,11 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 				canvas.drawText("minsHelper: " + minsHelper, 10, 170, paint);
 				canvas.drawText("hourHelper: " + hourHelper, 10, 200, paint);
-				
-				canvas.drawText("q1: " + q1, 10, 240, paint);
-				canvas.drawText("q2: " + q2, 10, 270, paint);
-				canvas.drawText("q3: " + q3, 10, 300, paint);
-				canvas.drawText("q4: " + q4, 10, 330, paint);
+
+				canvas.drawText("1 " + (q1 == 1 ? "<" : ""), 10, 240, paint);
+				canvas.drawText("2 " + (q2 == 1 ? "<" : ""), 10, 270, paint);
+				canvas.drawText("3 " + (q3 == 1 ? "<" : ""), 10, 300, paint);
+				canvas.drawText("4 " + (q4 == 1 ? "<" : ""), 10, 330, paint);
 
 				// Format digital hours
 				if (hourHelper < 10) {
@@ -293,8 +324,11 @@ public class MainActivity extends Activity implements OnTouchListener {
 				
 				// Display digital clock
 				paint.setColor(Color.RED);
-				paint.setTextSize(30);
-				canvas.drawText(hourFormat + ":" + minsFormat, 10, 370, paint);
+				paint.setTextSize(40);
+				paint.setTextAlign(Align.RIGHT);
+
+				canvas.drawText(hourFormat + ":" + minsFormat,
+						canvasWidth - 10, 40, paint);
 
 				holder.unlockCanvasAndPost(canvas);
 			}
