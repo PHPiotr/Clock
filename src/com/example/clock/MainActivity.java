@@ -118,7 +118,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 		Bitmap clock, hour, minute;
 
-		String hourFormat, minsFormat;
+		int hourFormat, minsFormat;
 
 		public MyAnalogClock(Context context) {
 
@@ -305,29 +305,21 @@ public class MainActivity extends Activity implements OnTouchListener {
 				canvas.drawText("3 " + (q3 == 1 ? "<" : ""), 10, 300, paint);
 				canvas.drawText("4 " + (q4 == 1 ? "<" : ""), 10, 330, paint);
 
-				// Format digital hours
-				if (hourHelper < 10) {
-					hourFormat = "0" + hourHelper;
+				if (hourHelper == 24) {
+					hourFormat = 0;
 				} else {
-					if (hourHelper == 24) {
-						hourFormat = "00";
-					} else {
-						hourFormat = "" + hourHelper;
-					}
+					hourFormat = hourHelper;
 				}
-				
-				// Format digital minutes
-				minsFormat = "" + minsHelper / 6;
-				if (minsHelper / 6 < 10) {
-					minsFormat = "0" + minsHelper / 6;
-				}
-				
+
+				minsFormat = minsHelper / 6;
+
 				// Display digital clock
 				paint.setColor(Color.RED);
 				paint.setTextSize(40);
 				paint.setTextAlign(Align.RIGHT);
 
-				canvas.drawText(hourFormat + ":" + minsFormat,
+				canvas.drawText(
+						String.format("%02d:%02d", hourFormat, minsFormat),
 						canvasWidth - 10, 40, paint);
 
 				holder.unlockCanvasAndPost(canvas);
