@@ -12,6 +12,7 @@ import android.graphics.Paint;
 import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -25,6 +26,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 	float eventX, eventY = 0;
 
+	int hourFormat, minsFormat;
 	int canvasWidth, canvasHeight, clockWidth, clockHeight, clockLeft,
 			clockTop, minuteHeight, minuteWidth, minuteLeft, minuteTop,
 			hourHeight, hourWidth, hourLeft, hourTop, minuteCenterX,
@@ -57,7 +59,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 		super.onCreate(savedInstanceState);
 
 		if (savedInstanceState != null) {
-			
+
 			eventX = eventY = 0;
 
 			minuteDegrees = savedInstanceState.getInt("MINUTE_DEGREES");
@@ -80,6 +82,19 @@ public class MainActivity extends Activity implements OnTouchListener {
 		clock.setOnTouchListener(this);
 
 		setContentView(clock);
+	}
+
+	protected void runTime() {
+
+		final Handler h = new Handler();
+
+		h.postDelayed(new Runnable() {
+
+			@Override
+			public void run() {
+				h.postDelayed(this, 1000);
+			}
+		}, 1000);
 	}
 
 	@Override
@@ -117,8 +132,6 @@ public class MainActivity extends Activity implements OnTouchListener {
 		boolean isRunning = false;
 
 		Bitmap clock, hour, minute;
-
-		int hourFormat, minsFormat;
 
 		public MyAnalogClock(Context context) {
 
@@ -205,7 +218,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 				minuteMatrix.reset();
 				minuteMatrix.postTranslate(minuteLeft, minuteTop);
-				
+
 				hourMatrix.reset();
 				hourMatrix.postTranslate(minuteLeft, minuteTop);
 
@@ -248,7 +261,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 							q2 = q3 = 0;
 						}
 					}
-					
+
 					// Clockwise move
 					if (q4 == 1) {
 						if (minuteDegrees > -1) {
@@ -260,7 +273,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 							}
 						}
 					}
-					
+
 					// Anti-clockwise move
 					if (q1 == 1) {
 						if (minuteDegrees < 0) {
@@ -275,7 +288,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 							}
 						}
 					}
-					
+
 					// What's the hour?
 					hourDegrees = (minsHelper + hourHelper * 360) / 12;
 				}
@@ -294,7 +307,8 @@ public class MainActivity extends Activity implements OnTouchListener {
 				canvas.drawText("eventX: " + (int) eventX, 10, 30, paint);
 				canvas.drawText("eventY: " + (int) eventY, 10, 60, paint);
 
-				canvas.drawText("mins degrees: " + minuteDegrees, 10, 100, paint);
+				canvas.drawText("mins degrees: " + minuteDegrees, 10, 100,
+						paint);
 				canvas.drawText("hour degrees: " + hourDegrees, 10, 130, paint);
 
 				canvas.drawText("minsHelper: " + minsHelper, 10, 170, paint);
