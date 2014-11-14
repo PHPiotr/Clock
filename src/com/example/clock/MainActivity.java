@@ -13,6 +13,7 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -44,6 +45,8 @@ public class MainActivity extends Activity implements OnTouchListener {
 	Handler h = null;
 
 	protected void onSaveInstanceState(Bundle outState) {
+		
+		outState.putBoolean("TIME_RUNS", timeRuns);
 
 		outState.putInt("SECOND_DEGREES", secondDegrees);
 		outState.putInt("MINUTE_DEGREES", minuteDegrees);
@@ -94,6 +97,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 		clock.setOnTouchListener(this);
 
 		setContentView(clock);
+		
 		this.runTime();
 	}
 
@@ -157,7 +161,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 							q4 = 1;
 							q1 = q2 = q3 = 0;
 						}
-
+						Log.e("TEST", "" + timeRuns);
 					} catch (Exception e) {
 						e.printStackTrace();
 					} finally {
