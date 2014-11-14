@@ -26,17 +26,26 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 	float eventX, eventY = 0;
 
-	int hourFormat, minsFormat;
+	int hourFormat, minsFormat, secsFormat;
 	int canvasWidth, canvasHeight, clockWidth, clockHeight, clockLeft,
-			clockTop, minuteHeight, minuteWidth, minuteLeft, minuteTop,
-			hourHeight, hourWidth, hourLeft, hourTop, minuteCenterX,
-			minuteCenterY, minuteDegrees, hourDegrees, minsHelper,
-			hourHelper = 0;
+			clockTop, minuteHeight, minuteWidth, secondHeight, secondWidth,
+			minuteLeft, minuteTop, secondLeft, secondTop, hourHeight,
+			hourWidth, hourLeft, hourTop, minuteCenterX, minuteCenterY,
+			secondCenterX, secondCenterY, minuteDegrees, hourDegrees,
+			secondDegrees, secondHelper, minsHelper, hourHelper = 0;
 
 	int q1, q2, q3, q4 = 0;
 
+	// Clock is working by default
+	boolean timeRuns = true;
+
+	Runnable r = null;
+
+	Handler h = null;
+
 	protected void onSaveInstanceState(Bundle outState) {
 
+		outState.putInt("SECOND_DEGREES", secondDegrees);
 		outState.putInt("MINUTE_DEGREES", minuteDegrees);
 		outState.putInt("HOUR_DEGREES", hourDegrees);
 
@@ -62,6 +71,9 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 			eventX = eventY = 0;
 
+			timeRuns = savedInstanceState.getBoolean("TIME_RUNS");
+
+			secondDegrees = savedInstanceState.getInt("SECOND_DEGREES");
 			minuteDegrees = savedInstanceState.getInt("MINUTE_DEGREES");
 			hourDegrees = savedInstanceState.getInt("HOUR_DEGREES");
 
@@ -82,19 +94,87 @@ public class MainActivity extends Activity implements OnTouchListener {
 		clock.setOnTouchListener(this);
 
 		setContentView(clock);
+		this.runTime();
 	}
 
 	protected void runTime() {
 
-		final Handler h = new Handler();
+		h = new Handler();
 
-		h.postDelayed(new Runnable() {
+		if (!timeRuns) {
+			h.removeCallbacks(r);
+		} else {
+			r = new Runnable() {
 
-			@Override
-			public void run() {
-				h.postDelayed(this, 1000);
+				public void run() {
+
+					try {
+
+						// seconds
+						secondDegrees = secondDegrees >= 360 ? 0
+								: secondDegrees;
+						secondDegrees += 6;
+
+						// minutes
+						if (secondDegrees % 60 == 0) {
+							minsHelper = minsHelper >= 360 ? 0 : minsHelper;
+							minsHelper += 1;
+							minuteDegrees = minsHelper == 90 ? -270
+									: minuteDegrees;
+							minuteDegrees += 1;
+						}
+
+						// hours
+						if (minuteDegrees % 12 == 0 && secondDegrees == 360) {
+							if (minsHelper % 360 == 0) {
+								hourHelper = hourHelper >= 24 ? 0 : hourHelper;
+								hourHelper += 1;
+							}
+							hourDegrees = hourDegrees == 360 ? 0 : hourDegrees;
+							hourDegrees += 1;
+						}
+
+						// 1st quarter
+						if (minuteDegrees >= 0 && minuteDegrees < 90) {
+							q1 = 1;
+							q2 = q3 = q4 = 0;
+						}
+
+						// 2nd quarter
+						if (minuteDegrees >= -270 && minuteDegrees < -180) {
+							q2 = 1;
+							q1 = q3 = q4 = 0;
+						}
+
+						// 3rd quarter
+						if (minuteDegrees >= -180 && minuteDegrees < -90) {
+							q3 = 1;
+							q1 = q2 = q4 = 0;
+						}
+
+						// 4th quarter
+						if (minuteDegrees >= -90 && minuteDegrees < 0) {
+							q4 = 1;
+							q1 = q2 = q3 = 0;
+						}
+
+					} catch (Exception e) {
+						e.printStackTrace();
+					} finally {
+						if (!timeRuns) {
+							h.removeCallbacks(this);
+						} else {
+							h.postDelayed(this, 1000);
+						}
+					}
+				}
+			};
+			if (!timeRuns) {
+				h.removeCallbacks(r);
+			} else {
+				h.postDelayed(r, 1000);
 			}
-		}, 1000);
+		}
 	}
 
 	@Override
@@ -109,6 +189,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 		super.onPause();
 		clock.pause();
+		h.removeCallbacks(r);
 	}
 
 	public boolean onTouch(View v, MotionEvent event) {
@@ -118,6 +199,16 @@ public class MainActivity extends Activity implements OnTouchListener {
 			eventY = event.getY();
 		}
 
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			timeRuns = false;
+			h.removeCallbacks(r);
+		}
+
+		if (event.getAction() == MotionEvent.ACTION_UP) {
+			eventX = eventY = 0;
+			timeRuns = true;
+			this.runTime();
+		}
 		return true;
 	}
 
@@ -125,13 +216,13 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 		SurfaceHolder holder;
 
-		Matrix minuteMatrix, hourMatrix;
+		Matrix minuteMatrix, hourMatrix, secondMatrix;
 
 		Thread thread = null;
 
 		boolean isRunning = false;
 
-		Bitmap clock, hour, minute;
+		Bitmap clock, hour, minute, second;
 
 		public MyAnalogClock(Context context) {
 
@@ -140,6 +231,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 			minuteMatrix = new Matrix();
 			hourMatrix = new Matrix();
+			secondMatrix = new Matrix();
 		}
 
 		public void pause() {
@@ -188,6 +280,8 @@ public class MainActivity extends Activity implements OnTouchListener {
 						R.drawable.clock_hour);
 				minute = BitmapFactory.decodeResource(getResources(),
 						R.drawable.clock_minute);
+				second = BitmapFactory.decodeResource(getResources(),
+						R.drawable.clock_second);
 
 				// canvas.get... does not work!
 				canvasWidth = getWidth();
@@ -202,6 +296,9 @@ public class MainActivity extends Activity implements OnTouchListener {
 				minuteHeight = minute.getHeight();
 				minuteWidth = minute.getWidth();
 
+				secondHeight = second.getHeight();
+				secondWidth = second.getWidth();
+
 				clockLeft = (canvasWidth - clockWidth) / 2;
 				clockTop = (canvasHeight - clockWidth) / 2;
 
@@ -211,10 +308,19 @@ public class MainActivity extends Activity implements OnTouchListener {
 				minuteLeft = (canvasWidth - minuteWidth) / 2;
 				minuteTop = (canvasHeight - minuteHeight) / 2;
 
+				secondLeft = (canvasWidth - secondWidth) / 2;
+				secondTop = (canvasHeight - secondHeight) / 2;
+
 				minuteCenterX = minuteLeft + minuteWidth / 2;
 				minuteCenterY = minuteTop + minuteHeight / 2;
 
+				secondCenterX = secondLeft + secondWidth / 2;
+				secondCenterY = secondTop + secondHeight / 2;
+
 				canvas.drawBitmap(clock, clockLeft, clockTop, null);
+
+				secondMatrix.reset();
+				secondMatrix.postTranslate(secondLeft, secondTop);
 
 				minuteMatrix.reset();
 				minuteMatrix.postTranslate(minuteLeft, minuteTop);
@@ -291,8 +397,10 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 					// What's the hour?
 					hourDegrees = (minsHelper + hourHelper * 360) / 12;
+					secondDegrees = ((minsHelper + 6) % 6) * 60;
 				}
-
+				secondMatrix.postRotate(secondDegrees, secondCenterX,
+						secondCenterY);
 				minuteMatrix.postRotate(minuteDegrees, minuteCenterX,
 						minuteCenterY);
 				hourMatrix
@@ -301,23 +409,29 @@ public class MainActivity extends Activity implements OnTouchListener {
 				canvas.drawBitmap(hour, hourMatrix, null);
 				canvas.drawBitmap(minute, minuteMatrix, null);
 
+				if (timeRuns) {
+					canvas.drawBitmap(second, secondMatrix, null);
+				}
+
 				paint.setColor(Color.BLACK);
 				paint.setTextSize(20);
 
 				canvas.drawText("eventX: " + (int) eventX, 10, 30, paint);
 				canvas.drawText("eventY: " + (int) eventY, 10, 60, paint);
 
-				canvas.drawText("mins degrees: " + minuteDegrees, 10, 100,
+				canvas.drawText("secs degrees: " + secondDegrees, 10, 100,
 						paint);
-				canvas.drawText("hour degrees: " + hourDegrees, 10, 130, paint);
+				canvas.drawText("mins degrees: " + minuteDegrees, 10, 130,
+						paint);
+				canvas.drawText("hour degrees: " + hourDegrees, 10, 160, paint);
 
-				canvas.drawText("minsHelper: " + minsHelper, 10, 170, paint);
-				canvas.drawText("hourHelper: " + hourHelper, 10, 200, paint);
+				canvas.drawText("minsHelper: " + minsHelper, 10, 200, paint);
+				canvas.drawText("hourHelper: " + hourHelper, 10, 230, paint);
 
-				canvas.drawText("1 " + (q1 == 1 ? "<" : ""), 10, 240, paint);
-				canvas.drawText("2 " + (q2 == 1 ? "<" : ""), 10, 270, paint);
-				canvas.drawText("3 " + (q3 == 1 ? "<" : ""), 10, 300, paint);
-				canvas.drawText("4 " + (q4 == 1 ? "<" : ""), 10, 330, paint);
+				canvas.drawText("1 " + (q1 == 1 ? "<" : ""), 10, 270, paint);
+				canvas.drawText("2 " + (q2 == 1 ? "<" : ""), 10, 300, paint);
+				canvas.drawText("3 " + (q3 == 1 ? "<" : ""), 10, 330, paint);
+				canvas.drawText("4 " + (q4 == 1 ? "<" : ""), 10, 360, paint);
 
 				if (hourHelper == 24) {
 					hourFormat = 0;
@@ -325,16 +439,25 @@ public class MainActivity extends Activity implements OnTouchListener {
 					hourFormat = hourHelper;
 				}
 
-				minsFormat = minsHelper / 6;
+				if (minsHelper == 360) {
+					minsFormat = 0;
+				} else {
+					minsFormat = minsHelper / 6;
+				}
+
+				if (secondDegrees == 360) {
+					secsFormat = 0;
+				} else {
+					secsFormat = secondDegrees / 6;
+				}
 
 				// Display digital clock
 				paint.setColor(Color.RED);
 				paint.setTextSize(40);
 				paint.setTextAlign(Align.RIGHT);
 
-				canvas.drawText(
-						String.format("%02d:%02d", hourFormat, minsFormat),
-						canvasWidth - 10, 40, paint);
+				canvas.drawText(String.format("%02d:%02d:%02d", hourFormat,
+						minsFormat, secsFormat), canvasWidth - 10, 40, paint);
 
 				holder.unlockCanvasAndPost(canvas);
 			}
