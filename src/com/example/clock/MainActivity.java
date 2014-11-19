@@ -13,6 +13,7 @@ import android.graphics.Paint.Align;
 import android.graphics.Paint.Style;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -25,9 +26,12 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 	MyAnalogClock clock;
 
+	Time time;
+
 	float eventX, eventY = 0;
 
-	int hourFormat, minsFormat, secsFormat;
+	int hourFormat, minsFormat, secsFormat, currentHour, currentMinute,
+			currentSecond;
 	int canvasWidth, canvasHeight, clockWidth, clockHeight, clockLeft,
 			clockTop, minuteHeight, minuteWidth, secondHeight, secondWidth,
 			minuteLeft, minuteTop, secondLeft, secondTop, hourHeight,
@@ -43,6 +47,8 @@ public class MainActivity extends Activity implements OnTouchListener {
 	Runnable r = null;
 
 	Handler h = null;
+
+	String currentTimeFormat;
 
 	protected void onSaveInstanceState(Bundle outState) {
 		
@@ -97,8 +103,6 @@ public class MainActivity extends Activity implements OnTouchListener {
 		clock.setOnTouchListener(this);
 
 		setContentView(clock);
-		
-		this.runTime();
 	}
 
 	protected void runTime() {
@@ -161,7 +165,7 @@ public class MainActivity extends Activity implements OnTouchListener {
 							q4 = 1;
 							q1 = q2 = q3 = 0;
 						}
-						Log.e("TEST", "" + timeRuns);
+						setCurrentTime();
 					} catch (Exception e) {
 						e.printStackTrace();
 					} finally {
@@ -181,11 +185,21 @@ public class MainActivity extends Activity implements OnTouchListener {
 		}
 	}
 
+	public void setCurrentTime() {
+		time.setToNow();
+		currentHour = time.hour;
+		currentMinute = time.minute;
+		currentSecond = time.second;
+	}
+
 	@Override
 	protected void onResume() {
 
 		super.onResume();
+		time = new Time();
 		clock.resume();
+		this.runTime();
+		this.setCurrentTime();
 	}
 
 	@Override
@@ -462,6 +476,11 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 				canvas.drawText(String.format("%02d:%02d:%02d", hourFormat,
 						minsFormat, secsFormat), canvasWidth - 10, 40, paint);
+
+				paint.setColor(Color.BLUE);
+				canvas.drawText(String.format("%02d:%02d:%02d", currentHour,
+						currentMinute, currentSecond), canvasWidth - 10, 80,
+						paint);
 
 				holder.unlockCanvasAndPost(canvas);
 			}
