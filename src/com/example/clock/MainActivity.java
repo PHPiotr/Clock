@@ -14,7 +14,6 @@ import android.graphics.Paint.Style;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.Time;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -44,14 +43,14 @@ public class MainActivity extends Activity implements OnTouchListener {
 	// Clock is working by default
 	boolean timeRuns = true;
 
-	Runnable r = null;
+	Runnable r, realTimeRunner = null;
 
-	Handler h = null;
+	Handler h, realTimeHandler = null;
 
 	String currentTimeFormat;
 
 	protected void onSaveInstanceState(Bundle outState) {
-		
+
 		outState.putBoolean("TIME_RUNS", timeRuns);
 
 		outState.putInt("SECOND_DEGREES", secondDegrees);
@@ -103,6 +102,25 @@ public class MainActivity extends Activity implements OnTouchListener {
 		clock.setOnTouchListener(this);
 
 		setContentView(clock);
+	}
+
+	protected void runCurrentTime() {
+
+		realTimeHandler = new Handler();
+		realTimeRunner = new Runnable() {
+
+			public void run() {
+				try {
+					setCurrentTime();
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					realTimeHandler.postDelayed(realTimeRunner, 1000);
+				}
+
+			}
+		};
+		realTimeHandler.postDelayed(realTimeRunner, 1000);
 	}
 
 	protected void runTime() {
@@ -165,7 +183,6 @@ public class MainActivity extends Activity implements OnTouchListener {
 							q4 = 1;
 							q1 = q2 = q3 = 0;
 						}
-						setCurrentTime();
 					} catch (Exception e) {
 						e.printStackTrace();
 					} finally {
@@ -192,6 +209,13 @@ public class MainActivity extends Activity implements OnTouchListener {
 		currentSecond = time.second;
 	}
 
+	public void setCurrentDegrees() {
+		secondDegrees = currentSecond * 6;
+		minuteDegrees = (int) (currentMinute * 6 + Math
+				.floor(currentSecond / 10));
+		hourDegrees = (int) (currentHour * 30 + Math.floor(currentMinute / 2));
+	}
+
 	@Override
 	protected void onResume() {
 
@@ -200,6 +224,8 @@ public class MainActivity extends Activity implements OnTouchListener {
 		clock.resume();
 		this.runTime();
 		this.setCurrentTime();
+		this.runCurrentTime();
+		this.setCurrentDegrees();
 	}
 
 	@Override
@@ -445,11 +471,6 @@ public class MainActivity extends Activity implements OnTouchListener {
 
 				canvas.drawText("minsHelper: " + minsHelper, 10, 200, paint);
 				canvas.drawText("hourHelper: " + hourHelper, 10, 230, paint);
-
-				canvas.drawText("1 " + (q1 == 1 ? "<" : ""), 10, 270, paint);
-				canvas.drawText("2 " + (q2 == 1 ? "<" : ""), 10, 300, paint);
-				canvas.drawText("3 " + (q3 == 1 ? "<" : ""), 10, 330, paint);
-				canvas.drawText("4 " + (q4 == 1 ? "<" : ""), 10, 360, paint);
 
 				if (hourHelper == 24) {
 					hourFormat = 0;
